@@ -1,7 +1,9 @@
-from playwright.sync_api import sync_playwright
+import logging
 from time import sleep
 from types import Dict, List
-import logging
+from playwright.sync_api import sync_playwright
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 # Configure logging
 logging.basicConfig(
@@ -11,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
 def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
 
     logging.info(f"Start scraping chat messages")
@@ -41,11 +43,11 @@ def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
     
 
 
-url="https://chatgpt.com/share/67890791-a098-8007-be1f-a16143aa0ecb"
-chat_messages = scrape_chat_messages(url)
+# url="https://chatgpt.com/share/67890791-a098-8007-be1f-a16143aa0ecb"
+# chat_messages = scrape_chat_messages(url)
 
-# Print messages in correct order
-for message in chat_messages:
-    print(f"{message['role'].capitalize()}: {message['content']}")
+# # Print messages in correct order
+# for message in chat_messages:
+#     print(f"{message['role'].capitalize()}: {message['content']}")
 
 
