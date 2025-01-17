@@ -1,6 +1,6 @@
 import logging
 from time import sleep
-from types import Dict, List
+from typing import Dict, List
 from playwright.sync_api import sync_playwright
 from tenacity import retry, stop_after_attempt, wait_exponential
 
