@@ -1,6 +1,5 @@
-
 import logging
-from scrape import scrape
+from scrape import scrape_chat_messages
 from prompt import user_prompt, system_prompt
 from concurrent.futures import ThreadPoolExecutor
 from utility import get_completion, parse_research_data, parse_research_papers, parse_topics
@@ -43,6 +42,7 @@ class Convo2Slide():
             return []
         else:
             temp = "\n".join(chat_data)
+            print(temp)
             return [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt.format(chat_data=temp)}   
@@ -56,15 +56,17 @@ class Convo2Slide():
 
         logger.info("Executing convo2slide research) assistance pipeline.")
         
-        self.chat = scrape(self.url)
+        self.chat = scrape_chat_messages(self.url)
 
         if self.chat == []:
             raise Exception("Empty list of chat messages")
+            return None
             
         messages = self.construct_messages(user_prompt, system_prompt)
 
         if len(messages) == 0:
             raise Exception("Empty list of messages")
+            return None
 
         response = get_completion(messages)
         print(response)
@@ -72,8 +74,12 @@ class Convo2Slide():
         
         
     
-    url="https://chatgpt.com/share/67890791-a098-8007-be1f-a16143aa0ecb"
+
+if __name__ == "__main__":
+    url = "https://chatgpt.com/share/67890791-a098-8007-be1f-a16143aa0ecb"
     convo2slide = Convo2Slide(url)
-    convo2slide()
+    convo2slide.pipeline()
+
 
    
+
