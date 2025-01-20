@@ -1,12 +1,15 @@
 import os
-import re
 import logging
 import aisuite as ai
 from dotenv import load_dotenv
+from typing import Tuple, List, Dict
 
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN
+from pptx.dml.color import RGBColor
 
 from bs4 import BeautifulSoup
-import xml.etree.ElementTree as ET
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 
@@ -19,8 +22,9 @@ load_dotenv()
 
 
 
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
-def get_completion(messages: list[dict], temp=0.75) -> str:
+def get_completion(messages: list[dict], temp=1) -> str:
     """ Generate a completion for the given messages and model.
     
     Args:
@@ -54,110 +58,115 @@ def get_completion(messages: list[dict], temp=0.75) -> str:
         return response.choices[0].message.content
     
 
-def parse_research_papers(xml_string: str) -> list[dict]:
+def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]:
     """
-    Parse XML string containing research paper analyses into a list of dictionaries.
-    
+    Parse an XML string containing slides into structured data.
+
     Args:
-        xml_string (str): XML string containing research paper analyses
-        
+        xml_string (str): XML string containing topic suggestions.
+
     Returns:
-        List[Dict[str, str]]: List of dictionaries containing paper analyses
+        Tuple[str, str, List[Dict[str, List[str]]]]: A tuple containing:
+            - Title of the slides (str).
+            - Subtitle of the slides (str).
+            - A list of dictionaries with slide titles and bullet points.
+
+    Raises:
+        ValueError: If XML parsing fails or required elements are missing.
     """
-    logger.info("Parsing research papers from XML")
-    
-    
-    clean_xml = '\n'.join(line for line in xml_string.split('\n') 
-                         if not line.strip() == 'xml')
-    
-    # Create root element from string
+    logger.info("Parsing topics from XML.")
+
     try:
-        root = ET.fromstring(clean_xml)
-    except ET.ParseError:
-        # If still having issues, try to extract just the research paper analyses
-        start_idx = clean_xml.find('<research_paper_analysis>')
-        end_idx = clean_xml.rfind('</research_paper_analysis>') + len('</research_paper_analysis>')
-        if start_idx != -1 and end_idx != -1:
-            analyses_xml = f"<root>{clean_xml[start_idx:end_idx]}</root>"
-            root = ET.fromstring(analyses_xml)
-        else:
-            logger.error("Failed to find research paper analysis tags in XML")
-            raise 
-    
-    papers = []
-    
-    for paper in root.findall('.//research_paper_analysis'):
-        paper_dict = {}
-        for child in paper:
-            text = ' '.join(child.text.split()) if child.text else ''
-            paper_dict[child.tag] = text
-            
-        papers.append(paper_dict)
-
-    logger.info("Successfully parsed research papers from XML")
-    return papers
-
-
-def parse_topics(xml_string: str) -> dict:
-    """
-    Parse XML string containing research topic suggestions into a dictionary of keywords and terms.
-    
-    Args:
-        xml_string (str): XML string containing topic suggestions
-        
-    Returns:
-        dict: A dictionary containing two lists: 'keywords' and 'terms'
-    """
-    logger.info("Parsing topics from XML using BeautifulSoup")
- 
-    try:
-        # Parse the cleaned XML using BeautifulSoup
+        # Parse the XML string using BeautifulSoup
         soup = BeautifulSoup(xml_string, 'xml')
-        logger.debug(f"BeautifulSoup parsed XML: {soup.prettify()}")
+        logger.debug("XML successfully parsed with BeautifulSoup.")
     except Exception as e:
-        logger.error(f"Error parsing XML with BeautifulSoup: {e}")
-        raise
-    
-    # Extract keywords from <specific_keywords>
-    keywords = [keyword.get_text() for keyword in soup.find_all('keyword')]
-    logger.info(f"Extracted keywords: {keywords}")
-    
-    # Extract terms from <technical_terms>
-    terms = [term.get_text() for term in soup.find_all('term')]
-    logger.info(f"Extracted terms: {terms}")
+        logger.error(f"Failed to parse XML: {e}")
+        raise ValueError("Invalid XML input.") from e
 
-    logger.info("Successfully parsed topics from XML")
+    try:
+        # Extract title and subtitle
+        title = soup.find('Title').get_text(strip=True)
+        subtitle = soup.find('Subtitle').get_text(strip=True)
+        logger.debug(f"Extracted Title: {title}, Subtitle: {subtitle}")
+    except AttributeError as e:
+        logger.error("Missing required elements in the XML: Title or Subtitle.")
+        raise ValueError("XML is missing required elements: Title or Subtitle.") from e
 
-    return keywords + terms 
+    # Extract slides data
+    slides_data = []
+    for slide in soup.find_all('Slide'):
+        slide_title = slide.find('Title')
+        bullet_points = slide.find_all('BulletPoint')
+
+        if slide_title:
+            slide_dict = {
+                "title": slide_title.get_text(strip=True),
+                "points": [point.get_text(strip=True) for point in bullet_points]
+            }
+            slides_data.append(slide_dict)
+            logger.debug(f"Parsed slide: {slide_dict}")
+
+    logger.info("Successfully parsed topics from XML.")
+
+    return title, subtitle, slides_data
 
 
 
-def parse_research_data(xml_content: str) -> list[dict]:
-    """ Parse the research papers from the given XML content using BeautifulSoup.
+def create_selenium_presentation(title: str, subtitle: str, slides_data: list):
+    # Create presentation
+    prs = Presentation()
     
-    Args:
-        xml_content(str): content in the xml format
+    # Define consistent colors
+    TITLE_COLOR = RGBColor(44, 62, 80)  # Dark blue-gray
+    BULLET_COLOR = RGBColor(52, 73, 94)  # Lighter blue-gray
     
-    Returns:
-        dict: The extracted research paper data.
-    """
-    logging.info(f"Parsing data from XML")
-  
-    try: 
-        # Parse the XML content with BeautifulSoup
-        soup = BeautifulSoup(xml_content, 'xml')
-    except Exception as e:
-        logger.error(f"Error parsing XML content with BeautifulSoup.\nException: {e}")
-        return {}
-    research_data = []
+    # Create title slide
+    title_slide_layout = prs.slide_layouts[0]
+    slide = prs.slides.add_slide(title_slide_layout)
     
-    for section in soup.find_all('entry'):
-            title = section.find('title').text.strip() if section.find('title') else "Unknown"
-            summary = section.find('summary').text.strip() if section.find('summary') else "Unknown"
-            links = section.find('id').text.strip() if section.find('id') else ""
-            research_data.append({"title": title, "summary": summary, "links": links})      
+    # Set main title
+    title_shape = slide.shapes.title
+    title_shape.text = title
+    title_shape.text_frame.paragraphs[0].font.size = Pt(44)
+    title_shape.text_frame.paragraphs[0].font.color.rgb = TITLE_COLOR
+    
+    # Set subtitle
+    subtitle_shape = slide.placeholders[1]
+    subtitle_shape.text =subtitle
+    subtitle_shape.text_frame.paragraphs[0].font.size = Pt(32)
+    subtitle_shape.text_frame.paragraphs[0].font.color.rgb = BULLET_COLOR
+    
+    # Create content slides
+    for slide_data in slides_data:
+        # Use content slide layout
+        content_slide_layout = prs.slide_layouts[1]
+        slide = prs.slides.add_slide(content_slide_layout)
+        
+        # Add title
+        title_shape = slide.shapes.title
+        title_shape.text = slide_data["title"]
+        title_shape.text_frame.paragraphs[0].font.size = Pt(40)
+        title_shape.text_frame.paragraphs[0].font.color.rgb = TITLE_COLOR
+        
+        # Add bullet points
+        body_shape = slide.shapes.placeholders[1]
+        tf = body_shape.text_frame
+        
+        # Clear default text
+        if tf.text:
+            tf.clear()
+        
+        # Add bullet points with formatting
+        for idx, point in enumerate(slide_data["points"]):
+            p = tf.add_paragraph() if idx > 0 else tf.paragraphs[0]
+            p.text = point
+            p.font.size = Pt(24)
+            p.font.color.rgb = BULLET_COLOR
+            p.level = 0
             
-
-    logging.info(f"Successfully parsed research paper from XML")
-    return research_data
-
+            # Add spacing between bullet points
+            p.space_after = Pt(12)
+      
+    
+    return prs
