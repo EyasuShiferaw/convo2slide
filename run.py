@@ -1,8 +1,8 @@
 import os
 import logging
 from pathlib import Path
-from para2pdf import create_pdf
-from research_assistance import ResearchAssistance
+from convo import Convo2Slide
+from utility import create_selenium_presentation
 
 from dotenv import load_dotenv
 
@@ -16,19 +16,23 @@ logger = logging.getLogger(__name__)
 
 def main(): 
 
-    topic = os.environ.get('topic', 'default_value')
+    url = os.environ.get('url', 'default_value')
 
-    if topic == 'default_value' or topic == '':
+    print(url)
+
+    if url == 'default_value' or url == '':
         logger.error(f"Can't generate research paper report, please provide topic")
         return f"Can't generate research paper report, please provide topic"
     
     
-    research_assistance = ResearchAssistance(topic)
-    research_assistance_data = research_assistance()
     
-    if research_assistance_data is None:
-        logger.error(f"Can't generate research paper report")
-       
+    convo2slide = Convo2Slide(url)
+    try: 
+        title, subtitle, slides_data = convo2slide.pipeline()
+    except:
+        raise "Can't generate slides from the given url"
+    
+   
    # Get the directory of the current script (run.py)
     script_dir = Path(__file__).parent
 
@@ -37,9 +41,11 @@ def main():
     output_dir.mkdir(exist_ok=True)  # Create 'output' directory if it doesn't exist
 
     # Define the file path within the 'output' directory
-    output_file = str(output_dir / 'result.pdf')
+    output_file = str(output_dir / 'result.pptx')
 
-    create_pdf(research_assistance_data, topic, output_file)
+   
+    presentation = create_selenium_presentation( title, subtitle, slides_data)
+    presentation.save(output_file)
 
     logger.info(f"Successfully generated research paper report")
 
