@@ -18,9 +18,8 @@ def main():
 
     url = os.environ.get('url', 'default_value')
     if url == 'default_value' or url == '':
-        logger.error(f"Can't generate research paper report, please provide topic")
-        return f"Can't generate research paper report, please provide topic"
-    
+        logger.error(f"Can't generate power point from the given url.)")
+        return f"Can't generate power point from the given url."
     
     
     convo2slide = Convo2Slide(url)
@@ -44,7 +43,7 @@ def main():
     presentation = create_selenium_presentation( title, subtitle, slides_data)
     presentation.save(output_file)
 
-    logger.info(f"Successfully generated research paper report")
+    logger.info(f"Successfully generated the power point presentation.)}")
 
     
 if __name__ == "__main__":
