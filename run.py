@@ -17,9 +17,6 @@ logger = logging.getLogger(__name__)
 def main(): 
 
     url = os.environ.get('url', 'default_value')
-
-    print(url)
-
     if url == 'default_value' or url == '':
         logger.error(f"Can't generate research paper report, please provide topic")
         return f"Can't generate research paper report, please provide topic"
