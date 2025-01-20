@@ -114,6 +114,18 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
 
 
 def create_selenium_presentation(title: str, subtitle: str, slides_data: list):
+    """
+    Create a PowerPoint presentation using python-pptx with consistent styling.
+    
+    Args:
+        title (str): The title of the presentation
+        subtitle (str): The subtitle of the presentation 
+        slides_data (list): List of dictionaries containing slide titles and bullet points
+        
+    Returns:
+        Presentation: A python-pptx Presentation object with formatted slides
+    """
+    logger.info("Creating PowerPoint presentation with selenium.")
     # Create presentation
     prs = Presentation()
     
@@ -168,5 +180,5 @@ def create_selenium_presentation(title: str, subtitle: str, slides_data: list):
             # Add spacing between bullet points
             p.space_after = Pt(12)
       
-    
+    logger.info("Successfully created PowerPoint presentation with selenium.")
     return prs
