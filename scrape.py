@@ -1,8 +1,10 @@
 import os
+import sys
 import logging
 import subprocess
 from time import sleep
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Optional
 from playwright.sync_api import sync_playwright
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -14,11 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-import subprocess
-import os
-import sys
-from typing import Optional
-from pathlib import Path
+
 
 def check_playwright_installation(browser: str = "chromium") -> bool:
     """
