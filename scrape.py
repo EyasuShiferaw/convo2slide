@@ -62,7 +62,18 @@ def check_playwright_installation(browser: str = "chromium") -> bool:
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
 def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
-
+    """
+    Scrape chat messages from a given URL using Playwright.
+    
+    Args:
+        url (str): The URL to scrape chat messages from
+        
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries containing chat messages with 'role' and 'content' keys.
+                             Returns empty list if scraping fails.
+    """
+    logger.info(f"Attempting to scrape chat messages from {url}")
+   
     try:
         is_installed = check_playwright_installation("chromium")
         print(f"Playwright and browser installation check completed successfully: {is_installed}")
@@ -92,6 +103,8 @@ def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
                 chat_data.append({'role': role, 'content': content})
             
             browser.close()
+
+            logger.info("Successfully scraped chat messages")
             
             return chat_data
     
