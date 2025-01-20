@@ -1,4 +1,6 @@
+import os
 import logging
+import subprocess
 from time import sleep
 from typing import Dict, List
 from playwright.sync_api import sync_playwright
@@ -12,9 +14,63 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+import subprocess
+import os
+import sys
+from typing import Optional
+from pathlib import Path
+
+def check_playwright_installation(browser: str = "chromium") -> bool:
+    """
+    Check if Playwright and specified browser are installed.
+    
+    Args:
+        browser (str): Browser to check for. Defaults to "chromium".
+                      Options: "chromium", "firefox", "webkit"
+    
+    Returns:
+        bool: True if both Playwright and browser are installed, False otherwise
+    """
+    # Check if playwright is installed
+    try:
+        import playwright
+    except ImportError:
+        print("Playwright not found. Installing playwright...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "playwright"], check=True)
+        
+    # Path where Playwright browsers are typically installed
+    if sys.platform == "win32":
+        browser_path = Path(os.path.expanduser("~")) / "AppData" / "Local" / "ms-playwright"
+    elif sys.platform == "darwin":
+        browser_path = Path(os.path.expanduser("~")) / "Library" / "Caches" / "ms-playwright"
+    else:  # Linux
+        browser_path = Path(os.path.expanduser("~")) / ".cache" / "ms-playwright"
+
+    # Check if browser is installed by looking for its directory
+    browser_exists = any(
+        d.name.startswith(browser) 
+        for d in browser_path.glob("*") 
+        if d.is_dir()
+    ) if browser_path.exists() else False
+
+    if not browser_exists:
+        print(f"{browser} browser not found. Installing browsers...")
+        subprocess.run([sys.executable, "-m", "playwright", "install", browser], check=True)
+        return True
+        
+    return True
+
+
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
 def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
+
+    try:
+        is_installed = check_playwright_installation("chromium")
+        print(f"Playwright and browser installation check completed successfully: {is_installed}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error during installation: {e}")
+        sys.exit(1)
 
     logging.info(f"Start scraping chat messages")
     with sync_playwright() as p:
@@ -41,13 +97,3 @@ def scrape_chat_messages(url:str) -> List[Dict[str, str]]:
             
             return chat_data
     
-
-
-# url="https://chatgpt.com/share/67890791-a098-8007-be1f-a16143aa0ecb"
-# chat_messages = scrape_chat_messages(url)
-
-# # Print messages in correct order
-# for message in chat_messages:
-#     print(f"{message['role'].capitalize()}: {message['content']}")
-
-
