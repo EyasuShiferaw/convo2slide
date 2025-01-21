@@ -75,10 +75,13 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
         ValueError: If XML parsing fails or required elements are missing.
     """
     logger.info("Parsing topics from XML.")
+    print(xml_string)
 
     try:
         # Parse the XML string using BeautifulSoup
-        soup = BeautifulSoup(xml_string, 'xml')
+        match = re.search(r"<PowerPoint.*?>.*?</PowerPoint>", xml_string, re.DOTALL | re.IGNORECASE)
+        xml_clean = match.group(0)
+        soup = BeautifulSoup(xml_clean, 'xml')
         logger.debug("XML successfully parsed with BeautifulSoup.")
     except Exception as e:
         logger.error(f"Failed to parse XML: {e}")
