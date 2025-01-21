@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import aisuite as ai
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ load_dotenv()
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
-def get_completion(messages: list[dict], temp=1) -> str:
+def get_completion(messages: list[dict]) -> str:
     """ Generate a completion for the given messages and model.
     
     Args:
@@ -48,7 +49,6 @@ def get_completion(messages: list[dict], temp=1) -> str:
         response = client.chat.completions.create(
                 model=model,
                 messages=messages,
-                temperature=temp
             )
     except Exception as e:
         logger.error(f"Error getting completion for messages.\nException: {e}")
@@ -86,8 +86,8 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
 
     try:
         # Extract title and subtitle
-        title = soup.find('Title').get_text(strip=True)
-        subtitle = soup.find('Subtitle').get_text(strip=True)
+        title = soup.find(re.compile('Title', re.IGNORECASE)).get_text(strip=True)
+        subtitle = soup.find(re.compile('Subtitle', re.IGNORECASE)).get_text(strip=True)
         logger.debug(f"Extracted Title: {title}, Subtitle: {subtitle}")
     except AttributeError as e:
         logger.error("Missing required elements in the XML: Title or Subtitle.")
@@ -95,9 +95,9 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
 
     # Extract slides data
     slides_data = []
-    for slide in soup.find_all('Slide'):
-        slide_title = slide.find('Title')
-        bullet_points = slide.find_all('BulletPoint')
+    for slide in soup.find_all(re.compile('Slide', re.IGNORECASE)):
+        slide_title = slide.find(re.compile('Title', re.IGNORECASE))
+        bullet_points = slide.find_all(re.compile('BulletPoint', re.IGNORECASE))
 
         if slide_title:
             slide_dict = {
