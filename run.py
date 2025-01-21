@@ -43,7 +43,7 @@ def main():
     presentation = create_selenium_presentation( title, subtitle, slides_data)
     presentation.save(output_file)
 
-    logger.info(f"Successfully generated the power point presentation.)}")
+    logger.info("Successfully generated the power point presentation.)")
 
     
 if __name__ == "__main__":
