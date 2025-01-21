@@ -1,7 +1,6 @@
 import logging
 from scrape import scrape_chat_messages
 from prompt import user_prompt, system_prompt
-from concurrent.futures import ThreadPoolExecutor
 from utility import get_completion, parse_topics
 
 
@@ -36,12 +35,10 @@ class Convo2Slide():
             return []
         else:
             temp = "\n".join(chat_data)
-            # temp = TEMP
-            print(temp)
             return [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt.format(chat_data=temp)}   
-                ]    
+                ]   
               
     def pipeline(self):
         """
@@ -64,7 +61,6 @@ class Convo2Slide():
             return None
 
         response = get_completion(messages)
-        print(response)
         title, subtitle, slides_data = parse_topics(response)
         return title, subtitle, slides_data
     
