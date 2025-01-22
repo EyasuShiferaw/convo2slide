@@ -50,6 +50,8 @@ class Convo2Slide():
         
         self.chat = scrape_chat_messages(self.url)
 
+
+
         if self.chat == []:
             raise Exception("Empty list of chat messages")
             return None
@@ -64,8 +66,3 @@ class Convo2Slide():
         title, subtitle, slides_data = parse_topics(response)
         return title, subtitle, slides_data
     
-
-    
-
-   
-
