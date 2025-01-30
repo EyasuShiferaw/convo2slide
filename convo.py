@@ -1,6 +1,6 @@
 import logging
 from scrape import scrape_chat_messages
-from prompt import user_prompt, system_prompt
+from prompt import extract_note_system_prompt, extract_note_user_prompt, slide_system_prompt, slide_user_prompt
 from utility import get_completion, parse_topics
 
 
@@ -20,7 +20,7 @@ class Convo2Slide():
         self.chat = []
 
     
-    def construct_messages(self, user_prompt: str, system_prompt: str) -> list[dict]:
+    def construct_messages(self, name: str, value: str, user_prompt: str, system_prompt: str) -> list[dict]:
         """
         Construct the system and user prompts for the OpenAI API.
         
@@ -28,6 +28,14 @@ class Convo2Slide():
             list: A list of dictionaries representing the system and user prompts.
         """
         logger.info("Constructing messages for the API.")
+       
+        return [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt.format(name=value)}   
+                ]   
+        
+    def generate_note(self):
+
         try:
             chat_data = [f"{message['role'].capitalize()}:  {message['content']}" for message in self.chat]
         except:
@@ -35,10 +43,9 @@ class Convo2Slide():
             return []
         else:
             temp = "\n".join(chat_data)
-            return [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt.format(chat_data=temp)}   
-                ]   
+            message = self.construct_messages("chat_data", chat_data, extract_note_user_prompt, extract_note_system_prompt )
+        
+
               
     def pipeline(self):
         """
