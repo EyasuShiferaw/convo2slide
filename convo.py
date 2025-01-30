@@ -18,9 +18,10 @@ class Convo2Slide():
     def __init__(self, url) -> None:
         self.url = url 
         self.chat = []
+        self.note = ""
 
     
-    def construct_messages(self, name: str, value: str, user_prompt: str, system_prompt: str) -> list[dict]:
+    def construct_messages(self, user_prompt: str, system_prompt: str) -> list[dict]:
         """
         Construct the system and user prompts for the OpenAI API.
         
@@ -28,10 +29,12 @@ class Convo2Slide():
             list: A list of dictionaries representing the system and user prompts.
         """
         logger.info("Constructing messages for the API.")
+        input = """** input**\n\n\n""" + self.note  
+
        
         return [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt.format(name=value)}   
+                    {"role": "user", "content": user_prompt+input}   
                 ]   
         
     def generate_note(self):
@@ -43,8 +46,21 @@ class Convo2Slide():
             return []
         else:
             temp = "\n".join(chat_data)
-            message = self.construct_messages("chat_data", chat_data, extract_note_user_prompt, extract_note_system_prompt )
-        
+            message = [
+                {"role": "system", "content": extract_note_system_prompt},
+                {"role": "user", "content": extract_note_user_prompt.format(chat_data=temp)}   
+
+            ]
+            # message = self.construct_messages("chat_data", temp, extract_note_user_prompt, extract_note_system_prompt)
+
+            note = get_completion(message, model="openai:gpt-4o-mini")
+            print(note, "\n\n\n\n")
+
+        if note:
+            self.note = note    
+        else:
+            logger.error("empty value for the self note variable")
+            raise    
 
               
     def pipeline(self):
@@ -56,20 +72,25 @@ class Convo2Slide():
         logger.info("Executing convo2slide research) assistance pipeline.")
         
         self.chat = scrape_chat_messages(self.url)
-
-
-
         if self.chat == []:
             raise Exception("Empty list of chat messages")
             return None
+        
+        self.generate_note()
+        if self.note:
+            messages = self.construct_messages(slide_user_prompt, slide_system_prompt)
+            if len(messages) == 0:
+                raise Exception("Empty list of messages")
+                return None
             
-        messages = self.construct_messages(user_prompt, system_prompt)
+            response = get_completion(messages)
+            print(response)
+            
+        else: 
+            raise
+            # return []    
 
-        if len(messages) == 0:
-            raise Exception("Empty list of messages")
-            return None
-
-        response = get_completion(messages)
-        title, subtitle, slides_data = parse_topics(response)
-        return title, subtitle, slides_data
+       
+        # title, subtitle, slides_data = parse_topics(response)
+        # return title, subtitle, slides_data
     
