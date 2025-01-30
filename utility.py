@@ -1,9 +1,10 @@
 import os
 import re
+import json
 import logging
 import aisuite as ai
 from dotenv import load_dotenv
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -25,7 +26,7 @@ load_dotenv()
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
-def get_completion(messages: list[dict]) -> str:
+def get_completion(messages: list[dict], model="openai:gpt-4o") -> str:
     """ Generate a completion for the given messages and model.
     
     Args:
@@ -43,7 +44,7 @@ def get_completion(messages: list[dict]) -> str:
   "api_key": os.environ.get("API_KEY"),
 }})
     response = None
-    model = "openai:gpt-4o"
+    model = model
     try:
         logger.info("Trying to get completion for messages")
         response = client.chat.completions.create(
@@ -114,6 +115,23 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
 
     return title, subtitle, slides_data
 
+
+def extract_json(text: str) -> Optional[dict]:
+
+    logger.info("start extracting JSON from text.")
+
+    # Use regex to extract the JSON part
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+
+    if json_match:
+        json_str = json_match.group(0)  # Extract matched JSON string
+        data_dict = json.loads(json_str)  # Convert JSON string to dictionary
+        logger.info("Successfully extracted JSON from text.")
+        temp = data_dict["presentation"]
+        return temp["title"], temp["subtitle"], temp["slides"]
+    else:
+        logger.error("No JSON found.")
+        return None
 
 
 def create_selenium_presentation(title: str, subtitle: str, slides_data: list):
