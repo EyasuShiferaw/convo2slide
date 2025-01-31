@@ -2,7 +2,7 @@ import os
 import logging
 from pathlib import Path
 from convo import Convo2Slide
-from utility import create_selenium_presentation
+from utility import create_presentation
 
 from dotenv import load_dotenv
 
@@ -23,29 +23,29 @@ def main():
     
     
     convo2slide = Convo2Slide(url)
-    convo2slide.pipeline()
-   
-#     try: 
-#         title, subtitle, slides_data = convo2slide.pipeline()
-#     except:
-#         raise "Can't generate slides from the given url"
     
    
-#    # Get the directory of the current script (run.py)
-#     script_dir = Path(__file__).parent
+    try: 
+        slides_data = convo2slide.pipeline()
+    except:
+        raise "Can't generate slides from the given url"
+    
+   
+   # Get the directory of the current script (run.py)
+    script_dir = Path(__file__).parent
 
-#     # Define the path for the 'output' folder inside the script's directory
-#     output_dir = script_dir / 'output'
-#     output_dir.mkdir(exist_ok=True)  # Create 'output' directory if it doesn't exist
+    # Define the path for the 'output' folder inside the script's directory
+    output_dir = script_dir / 'output'
+    output_dir.mkdir(exist_ok=True)  # Create 'output' directory if it doesn't exist
 
-#     # Define the file path within the 'output' directory
-#     output_file = str(output_dir / 'result.pptx')
+    # Define the file path within the 'output' directory
+    output_file = str(output_dir / 'result.pptx')
 
    
-#     presentation = create_selenium_presentation( title, subtitle, slides_data)
-#     presentation.save(output_file)
+    presentation = create_presentation(slides_data)
+    presentation.save(output_file)
 
-#     logger.info("Successfully generated the power point presentation.)")
+    logger.info("Successfully generated the power point presentation.)")
 
     
 if __name__ == "__main__":
