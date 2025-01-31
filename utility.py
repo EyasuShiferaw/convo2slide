@@ -51,6 +51,7 @@ def get_completion(messages: list[dict], model="openai:gpt-4o") -> str:
         response = client.chat.completions.create(
                 model=model,
                 messages=messages,
+                temperature=1.0,
             )
     except Exception as e:
         logger.error(f"Error getting completion for messages.\nException: {e}")
@@ -319,4 +320,3 @@ def create_presentation(json_data):
     
     # Save the presentation
     return prs
-   
