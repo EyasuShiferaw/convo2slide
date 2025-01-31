@@ -1,7 +1,7 @@
 import logging
 from scrape import scrape_chat_messages
 from prompt import extract_note_system_prompt, extract_note_user_prompt, slide_system_prompt, slide_user_prompt
-from utility import get_completion, parse_topics
+from utility import get_completion, extract_json
 
 
 
@@ -69,7 +69,7 @@ class Convo2Slide():
 
         """
 
-        logger.info("Executing convo2slide research) assistance pipeline.")
+        logger.info("Executing convo2slide  pipeline.")
         
         self.chat = scrape_chat_messages(self.url)
         if self.chat == []:
@@ -83,14 +83,16 @@ class Convo2Slide():
                 raise Exception("Empty list of messages")
                 return None
             
-            response = get_completion(messages)
-            print(response)
-            
-        else: 
+        response = get_completion(messages)
+        try:
+            slides_data = extract_json(response)
+           
+        except Exception as e:
+            logger.error(f"Error parsing topics from response.\nException: {e}")
             raise
-            # return []    
+        else:
+            logger.info("Successfully executed convo2slide  pipeline.")
+            return slides_data
 
        
-        # title, subtitle, slides_data = parse_topics(response)
-        # return title, subtitle, slides_data
     
