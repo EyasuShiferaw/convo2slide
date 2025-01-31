@@ -8,8 +8,9 @@ from typing import Tuple, List, Dict, Optional
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE, PP_PARAGRAPH_ALIGNMENT
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
 
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -117,7 +118,20 @@ def parse_topics(xml_string: str) -> Tuple[str, str, List[Dict[str, List[str]]]]
 
 
 def extract_json(text: str) -> Optional[dict]:
+    """
+    Extract JSON data from text string.
 
+    Args:
+        text (str): Text containing JSON data.
+
+    Returns:
+        Optional[tuple]: A tuple containing:
+            - Title of the slides (str)
+            - Subtitle of the slides (str) 
+            - A list of dictionaries with slide data
+        Returns None if no valid JSON is found.
+
+    """
     logger.info("start extracting JSON from text.")
 
     # Use regex to extract the JSON part
@@ -127,79 +141,182 @@ def extract_json(text: str) -> Optional[dict]:
         json_str = json_match.group(0)  # Extract matched JSON string
         data_dict = json.loads(json_str)  # Convert JSON string to dictionary
         logger.info("Successfully extracted JSON from text.")
-        temp = data_dict["presentation"]
-        return temp["title"], temp["subtitle"], temp["slides"]
+        return data_dict
     else:
         logger.error("No JSON found.")
         return None
 
 
-def create_selenium_presentation(title: str, subtitle: str, slides_data: list):
-    """
-    Create a PowerPoint presentation using python-pptx with consistent styling.
+def apply_theme_color(shape, rgb):
+    """Apply RGB color to shape fill"""
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor(*rgb)
+
+def add_bullet_point(tf, text, theme_colors):
+    """Helper function to add properly formatted bullet points"""
+    p = tf.add_paragraph()
+    p.text = f"• {text}"  # Explicitly add bullet point symbol
+    p.font.size = Pt(20)
     
-    Args:
-        title (str): The title of the presentation
-        subtitle (str): The subtitle of the presentation 
-        slides_data (list): List of dictionaries containing slide titles and bullet points
-        
-    Returns:
-        Presentation: A python-pptx Presentation object with formatted slides
-    """
-    logger.info("Creating PowerPoint presentation with selenium.")
+    # Check if text contains a formula and apply different color
+    if any(char in text for char in ["=", "+", "^", "*", "/"]):
+        p.font.color.rgb = theme_colors['accent']  # Different color for formulas
+    else:
+        p.font.color.rgb = theme_colors['text']  # Default text color
+
+    p.space_after = Pt(12)
+    p.level = 0
+    return p
+
+def create_presentation(json_data):
     # Create presentation
     prs = Presentation()
     
-    # Define consistent colors
-    TITLE_COLOR = RGBColor(44, 62, 80)  # Dark blue-gray
-    BULLET_COLOR = RGBColor(52, 73, 94)  # Lighter blue-gray
+    # Define theme colors
+    THEME_COLORS = {
+        'primary': RGBColor(0, 75, 135),     # Deep blue
+        'secondary': RGBColor(240, 240, 240), # Light gray
+        'accent': RGBColor(255, 127, 0),      # Orange accent
+        'text': RGBColor(51, 51, 51)         # Dark gray for text
+    }
+    
+    # Set slide dimensions for 16:9 aspect ratio
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    
+    # Get presentation data safely
+    presentation_data = json_data.get('presentation', {})
     
     # Create title slide
-    title_slide_layout = prs.slide_layouts[0]
-    slide = prs.slides.add_slide(title_slide_layout)
+    title_slide = prs.slides.add_slide(prs.slide_layouts[0])
     
-    # Set main title
-    title_shape = slide.shapes.title
-    title_shape.text = title
-    title_shape.text_frame.paragraphs[0].font.size = Pt(44)
-    title_shape.text_frame.paragraphs[0].font.color.rgb = TITLE_COLOR
+    # Add background shape to title slide
+    background = title_slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height
+    )
+    apply_theme_color(background, (0, 75, 135))
     
-    # Set subtitle
-    subtitle_shape = slide.placeholders[1]
-    subtitle_shape.text =subtitle
-    subtitle_shape.text_frame.paragraphs[0].font.size = Pt(32)
-    subtitle_shape.text_frame.paragraphs[0].font.color.rgb = BULLET_COLOR
+    # Add decorative element
+    accent_bar = title_slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(1), Inches(3),
+        Inches(2), Inches(0.1)
+    )
+    apply_theme_color(accent_bar, (255, 127, 0))
+    
+    # Add and style title
+    title_box = title_slide.shapes.add_textbox(
+        Inches(1), Inches(2),
+        Inches(11), Inches(1)
+    )
+    title_frame = title_box.text_frame
+    title_para = title_frame.add_paragraph()
+    title_para.text = presentation_data.get('title', 'Presentation Title')
+    title_para.font.size = Pt(54)
+    title_para.font.bold = True
+    title_para.font.color.rgb = RGBColor(255, 255, 255)
+    title_para.alignment = PP_ALIGN.LEFT
+    
+    # Add and style subtitle
+    subtitle_box = title_slide.shapes.add_textbox(
+        Inches(1), Inches(3.5),
+        Inches(11), Inches(1)
+    )
+    subtitle_frame = subtitle_box.text_frame
+    subtitle_frame.word_wrap = True  # Enable text wrapping
+    subtitle_frame.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT  # Auto-resize height
+
+    subtitle_para = subtitle_frame.add_paragraph()
+    subtitle_para.text = presentation_data.get('subtitle', '')
+    subtitle_para.font.size = Pt(32)
+    subtitle_para.font.color.rgb = RGBColor(240, 240, 240)
+    subtitle_para.alignment = PP_ALIGN.LEFT
     
     # Create content slides
-    for slide_data in slides_data:
-        # Use content slide layout
-        content_slide_layout = prs.slide_layouts[1]
-        slide = prs.slides.add_slide(content_slide_layout)
+    for idx, slide_data in enumerate(presentation_data.get('slides', []), 1):
+        slide = prs.slides.add_slide(prs.slide_layouts[1])
         
-        # Add title
-        title_shape = slide.shapes.title
-        title_shape.text = slide_data["title"]
-        title_shape.text_frame.paragraphs[0].font.size = Pt(40)
-        title_shape.text_frame.paragraphs[0].font.color.rgb = TITLE_COLOR
+        # Add subtle background
+        background = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE, 0, 0,
+            prs.slide_width, prs.slide_height
+        )
+        background.fill.solid()
+        background.fill.fore_color.rgb = RGBColor(248, 248, 248)
         
-        # Add bullet points
-        body_shape = slide.shapes.placeholders[1]
-        tf = body_shape.text_frame
+        # Add accent bar on left side
+        left_bar = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            0, 0, Inches(0.25), prs.slide_height
+        )
+        apply_theme_color(left_bar, (0, 75, 135))
         
-        # Clear default text
-        if tf.text:
-            tf.clear()
+        # Add title with accent bar
+        title_box = slide.shapes.add_textbox(
+            Inches(0.5), Inches(0.5),
+            Inches(12), Inches(1)
+        )
+        title_frame = title_box.text_frame
+        title_para = title_frame.add_paragraph()
+        title_para.text = slide_data.get('title', f'Slide {idx}')
+        title_para.font.size = Pt(44)
+        title_para.font.bold = True
+        title_para.font.color.rgb = THEME_COLORS['primary']
         
-        # Add bullet points with formatting
-        for idx, point in enumerate(slide_data["points"]):
-            p = tf.add_paragraph() if idx > 0 else tf.paragraphs[0]
-            p.text = point
-            p.font.size = Pt(24)
-            p.font.color.rgb = BULLET_COLOR
-            p.level = 0
+        # Add small accent bar under title
+        accent_bar = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(0.5), Inches(1.4),
+            Inches(2), Inches(0.06)
+        )
+        apply_theme_color(accent_bar, (255, 127, 0))
+        
+        # Calculate content positioning based on what's present
+        current_y = Inches(1.8)
+        
+        # Add paragraph content if it exists
+        paragraph_text = slide_data.get('paragraph')
+        if paragraph_text:
+            content_box = slide.shapes.add_textbox(
+                Inches(0.5), current_y,
+                Inches(12), Inches(2)
+            )
+            tf = content_box.text_frame
+            tf.word_wrap = True
             
-            # Add spacing between bullet points
-            p.space_after = Pt(12)
-      
-    logger.info("Successfully created PowerPoint presentation with selenium.")
+            p = tf.add_paragraph()
+            p.text = paragraph_text
+            p.font.size = Pt(24)
+            p.font.color.rgb = THEME_COLORS['text']
+            p.space_after = Pt(24)
+            current_y += Inches(2)
+        
+        # Add bullet points if they exist
+        bullet_points = slide_data.get('bullet_points', [])
+        if bullet_points:
+            bullet_box = slide.shapes.add_textbox(
+                Inches(0.5), current_y,
+                Inches(12), Inches(3)
+            )
+            tf = bullet_box.text_frame
+            tf.word_wrap = True
+            
+            for point in bullet_points:
+                bullet_para = add_bullet_point(tf, point, THEME_COLORS)
+                bullet_para.alignment = PP_PARAGRAPH_ALIGNMENT.LEFT
+        
+        # Add slide number
+        slide_number = slide.shapes.add_textbox(
+            Inches(12), Inches(6.8),
+            Inches(0.5), Inches(0.3)
+        )
+        slide_number_frame = slide_number.text_frame
+        slide_number_para = slide_number_frame.add_paragraph()
+        slide_number_para.text = str(idx)
+        slide_number_para.font.size = Pt(14)
+        slide_number_para.font.color.rgb = THEME_COLORS['primary']
+        slide_number_para.alignment = PP_ALIGN.RIGHT
+    
+    # Save the presentation
     return prs
+   
