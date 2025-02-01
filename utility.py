@@ -303,7 +303,8 @@ def create_presentation(json_data):
             tf.word_wrap = True
             
             for point in bullet_points:
-                bullet_para = add_bullet_point(tf, point, THEME_COLORS)
+                cleaned_text = re.sub(r'^[^\w\d]+', '', point)
+                bullet_para = add_bullet_point(tf, cleaned_text, THEME_COLORS)
                 bullet_para.alignment = PP_PARAGRAPH_ALIGNMENT.LEFT
         
         # Add slide number
