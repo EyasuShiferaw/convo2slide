@@ -84,6 +84,7 @@ class Convo2Slide():
                 return None
             
         response = get_completion(messages)
+        print(response)
         try:
             slides_data = extract_json(response)
            
@@ -92,6 +93,7 @@ class Convo2Slide():
             raise
         else:
             logger.info("Successfully executed convo2slide  pipeline.")
+       
             return slides_data
 
        
