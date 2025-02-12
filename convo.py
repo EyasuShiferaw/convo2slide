@@ -51,9 +51,9 @@ class Convo2Slide():
                 {"role": "user", "content": extract_note_user_prompt.format(chat_data=temp)}   
 
             ]
-            # message = self.construct_messages("chat_data", temp, extract_note_user_prompt, extract_note_system_prompt)
+            # message = self.construct_messages("chat_data", temp, extract_note_user_prompt, extract_note_system_prompt) model="openai:gpt-4o-mini"
 
-            note = get_completion(message, model="openai:gpt-4o-mini")
+            note = get_completion(message)
             print(note, "\n\n\n\n")
 
         if note:
@@ -84,7 +84,6 @@ class Convo2Slide():
                 return None
             
         response = get_completion(messages)
-        print(response)
         try:
             slides_data = extract_json(response)
            
