@@ -38,7 +38,7 @@ def main():
     output_dir.mkdir(exist_ok=True)  # Create 'output' directory if it doesn't exist
 
     # Define the file path within the 'output' directory
-    output_file = str(output_dir / 'result1.pptx')
+    output_file = str(output_dir / 'result3.pptx')
 
    
     presentation = create_presentation(slides_data)
