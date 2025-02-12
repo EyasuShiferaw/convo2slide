@@ -23,8 +23,7 @@ def main():
     
     
     convo2slide = Convo2Slide(url)
-    
-   
+  
     try: 
         slides_data = convo2slide.pipeline()
     except:
@@ -39,7 +38,7 @@ def main():
     output_dir.mkdir(exist_ok=True)  # Create 'output' directory if it doesn't exist
 
     # Define the file path within the 'output' directory
-    output_file = str(output_dir / 'result.pptx')
+    output_file = str(output_dir / 'result1.pptx')
 
    
     presentation = create_presentation(slides_data)
