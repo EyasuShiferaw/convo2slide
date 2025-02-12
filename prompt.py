@@ -13,17 +13,17 @@ slide_user_prompt = """
 ---
 
 ## **Instructions**  
-### **Step 1: Content Analysis**  
-1.1. Identify:  
-- Primary theme → `title`  
-- ALL supporting themes → `subtitle`  
-- All distinct topics (e.g., "Supply Chain Optimization", "Risk Mitigation")  
-- Subtopics/examples under each topic  
-- Explain all in detail Subtopics/examples u
+### **Step 1: Content Analysis - IN-DEPTH UNDERSTANDING IS KEY**  
+1.1. **Identify and Elaborate:**  
+    - Primary theme → `title` (needs to encapsulate the core essence)
+    - ALL supporting themes → `subtitle` (capture the breadth of the content)
+    - All distinct topics (e.g., "Supply Chain Optimization", "Risk Mitigation") - **Identify EACH topic clearly and distinctly.**
+    - Subtopics/examples under each topic - **For EVERY topic, identify ALL subtopics and examples. Do not miss any.**
+    - **EXPLAIN ALL SUBTOPICS AND EXAMPLES IN EXCRUCIATING DETAIL.**  Imagine you are explaining this to someone with zero prior knowledge.  **Focus on providing thorough, comprehensive descriptions.**
 
-1.2. Flag ambiguous content for user clarification (e.g., *"Should X and Y be separate topics?"*).  
+1.2. Flag ambiguous content for user clarification (e.g., *"Should X and Y be separate topics? Please clarify the relationship between these elements to ensure accurate structuring."*). Be specific in your clarification questions, highlighting the ambiguity and why it requires user input.
 
-### **Step 2: Hierarchy Construction**  
+### **Step 2: Hierarchy Construction - STRUCTURE FOR CLARITY AND DETAIL**  
 2.1. Build this schema:  
 ```json  
 {
@@ -33,69 +33,69 @@ slide_user_prompt = """
     "slides": [
       {
         "title": "Introduction",
-        "paragraph": "[Purpose + Topic List]",
+        "paragraph": "[Comprehensive Purpose + Detailed Topic List]. **Provide a substantial paragraph here, setting the stage and clearly outlining all topics to be covered with a good level of initial detail.**",
         "bullet_points": [
-          "Bullet point 1",
-          "Bullet point 2"
+          "Bullet point 1: **Provide a detailed and informative bullet point here. Aim for substance, not just keywords.**",
+          "Bullet point 2: **Provide another detailed and informative bullet point, expanding on key introductory concepts.**"
         ]
       },
       {
         "title": "[Topic Name]",
-        "paragraph": "[Definitions, Processes, Examples]",
+        "paragraph": "[**IN-DEPTH Definitions, Detailed Processes, Rich Examples, Contextual Background, Nuances, and Edge Cases.** This paragraph MUST be highly detailed and explanatory. Assume the reader needs a full understanding of the topic.]",
         "bullet_points": [
-          "Bullet point 1",
-          "Bullet point 2"
+          "Bullet point 1: **Elaborate on a key aspect of the topic with a detailed bullet point. Provide specific examples and explanations within the bullet itself.**",
+          "Bullet point 2: **Further expand on another crucial element of the topic with a rich and descriptive bullet point.  Do not be brief; be comprehensive.**",
+          "Bullet point 3 (and so on): **Continue adding bullet points as needed to cover all important facets of the topic in detail.**"
         ]
       },
       {
         "title": "Conclusion",
-        "paragraph": "[Cross-topic insights + Next steps]",
+        "paragraph": "[**Detailed Cross-topic insights + Concrete Next steps, with justifications and elaborations.**  Explain the connections between topics and provide actionable and well-reasoned next steps.  This section should also be detailed.]",
         "bullet_points": [
-          "Bullet point 1",
-          "Bullet point 2"
+          "Bullet point 1: **Summarize a key cross-topic insight with a detailed and insightful bullet point.**",
+          "Bullet point 2: **Outline a specific and well-explained next step, providing rationale and context within the bullet point.**"
         ]
       }
     ]
   }
 }
-```
 
-### **Step 3: Content Population Rules**  
-| Element          | Rules                                                                 |  
-|------------------|-----------------------------------------------------------------------|  
-| `title`        | ≤ 5 words, noun phrase (e.g., "AI-Driven Logistics")                 |  
-| `subtitle`     | 3-7 word phrases separated by pipes (e.g., "Automation | Cost Control") |  
-| `paragraph`      | Use paragraphs for explanations (>2 sentences)                     |  
-| `bullet_points` | Use concise bullet points (`•`, `-`)                                   |  
-| Topic ordering   | Logical flow (e.g., Foundation → Applications → Challenges)          |  
 
-### **Step 4: Validation Checklist**  
-Before finalizing, confirm:  
-✅ All input topics are mapped  
-✅ No missing idea or concept from the note  
-✅ No merged unrelated concepts  
-✅ Introduction slide previews all topics  
-✅ Conclusion synthesizes multi-topic insights  
 
----
+Step 3: Content Population Rules - EMPHASIZE DETAIL IN EVERY ELEMENT
+Element	Rules
+title	≤ 5 words, noun phrase (e.g., "AI-Driven Logistics"). Ensure it accurately and comprehensively reflects the primary theme.
+subtitle	3-7 word phrases separated by pipes (e.g., "Automation
+paragraph	MUST BE MULTI-SENTENCE and HIGHLY DETAILED. Aim for paragraphs that thoroughly explain the concept, providing context, examples, and nuances. Do not be concise; be comprehensive.
+bullet_points	MUST BE DETAILED AND INFORMATIVE. Each bullet point should convey a substantial piece of information and contribute to a deeper understanding of the topic. Focus on providing rich, explanatory bullet points, not just short phrases. (•, -)
+Topic ordering	Logical flow (e.g., Foundation → Applications → Challenges). Ensure the order facilitates a detailed and progressive understanding of the subject matter.
+Step 4: Validation Checklist - CONFIRM DETAIL AND COMPLETENESS
+Before finalizing, confirm:
+✅ All input topics are mapped - and mapped with sufficient detail.
+✅ No missing idea or concept from the note - every nuance and detail must be captured.
+✅ No merged unrelated concepts - maintain clarity and separation while ensuring detailed explanations within each concept.
+✅ Introduction slide previews all topics - and provides a detailed overview of what will be discussed.
+✅ Conclusion synthesizes multi-topic insights - and offers detailed and insightful connections and next steps.
+✅ DETAIL CHECK: Review each paragraph and bullet point to ensure it provides a comprehensive and detailed explanation. Is there any area where more detail could be added? If yes, add it.
 
-# STRICT TRANSFORMATION PROTOCOL  
+STRICT TRANSFORMATION PROTOCOL - MAXIMIZE DATA CAPTURE
+Data Extraction - EXTRACT EVERYTHING WITH GRANULARITY
 
-1. **Data Extraction**  
-   - Extract ALL:  
-     • Formulas (wrap in `formula`, make sure it string not LaTeX)  
-     • Numerical values ($2,000, 6%, 120 months)  
-     • Methodological steps (e.g., "simulate 10,000 scenarios")  
-     • Comparative statements (e.g., "ignores market volatility")  
+Extract ALL:
+• Formulas (wrap in formula, make sure it string not LaTeX) - Capture the formula precisely and in full detail.
+• Numerical values ($2,000, 6%, 120 months) - Extract all numerical values exactly as they appear, including units and context.
+• Methodological steps (e.g., "simulate 10,000 scenarios") - Extract each step in detail, including parameters and context.
+• Comparative statements (e.g., "ignores market volatility") - Capture the full comparison, including both sides and the implications. Extract the nuance of the comparison.
+• DESCRIPTIONS AND EXPLANATIONS: Pay special attention to extracting detailed descriptions and explanations. Do not summarize or shorten these; capture them in full and with all their nuances.
 
-2. **Validation Table**  
-   After generating output, create this table to confirm completeness:  
+Validation Table - ENSURE NO DETAIL IS LOST
+After generating output, create this table to confirm completeness and detail:
 
-   | Original Note Snippet      | Mapped to Slide/Concept? |  
-   |----------------------------|--------------------------|  
-   | "Monthly investment $2,000"| Deterministic Models ✔️  |  
-   | "Monte Carlo requires μ/σ" | Monte Carlo Slide ✔️     |  
-   | [Your unique data point]    | [Check here]             |  
+Original Note Snippet (Focus on Detail)	Mapped to Slide/Concept? (With Sufficient Detail?)
+"Monthly investment $2,000 with consistent contributions over the investment period"	Deterministic Models ✔️ (Detailed description of consistent contributions included)
+"Monte Carlo requires μ/σ, specifically needing accurate estimations of both the mean and standard deviation to generate reliable simulations"	Monte Carlo Slide ✔️ (Detailed explanation of the need for accurate μ/σ estimations and their impact on simulation reliability included)
+[Your unique data point with rich detail]	[Check here - ensure all detail is mapped]
+
 
 **Example Output:**  
 ```json  
@@ -106,33 +106,33 @@ Before finalizing, confirm:
     "slides": [
       {
         "title": "Introduction",
-        "paragraph": "Objective: Explore methods for estimating ETF portfolio value",
+        "paragraph": "Objective: This presentation explores three distinct yet complementary methods for estimating the future portfolio value of Exchange Traded Funds (ETFs). We will delve into deterministic models, which offer baseline projections under simplified assumptions; Monte Carlo simulations, which introduce variability and probabilistic forecasting; and historical backtesting, which provides insights grounded in real-world market data. Each method offers unique perspectives and addresses different aspects of portfolio estimation, providing a comprehensive toolkit for investors.",
         "bullet_points": [
-          "Key focus areas:",
-          "Deterministic models for baseline projections",
-          "Monte Carlo simulations for variability",
-          "Historical backtesting for realistic insights"
+          "Key focus areas: This presentation will systematically examine the following critical areas within ETF portfolio estimation:",
+          "- Deterministic models will be analyzed to establish clear and straightforward baseline projections, highlighting their strengths and limitations in capturing market dynamics.",
+          "- Monte Carlo simulations will be explored as a means to incorporate market variability and generate probabilistic forecasts, allowing for risk quantification and scenario analysis.",
+          "- Historical backtesting methodologies will be investigated to provide realistic insights based on past market behavior, enabling validation and refinement of estimation approaches."
         ]
       },
       {
         "title": "Deterministic Models",
-        "paragraph": "Comprehensive explanation of static return assumptions",
+        "paragraph": "Deterministic models, in the context of portfolio estimation, are characterized by their reliance on static return assumptions. This means they operate under the premise of constant rates of return, effectively disregarding market volatility and fluctuations. These models utilize fixed inputs, such as a consistent monthly investment of $2,000, an assumed annual return rate of 6%, and a defined time horizon of 120 months (equivalent to 10 years). The core formula underpinning these calculations is the Future Value of an ordinary annuity: Future Value = P * [((1 + r)^n - 1) / r], where P represents the periodic payment, r is the rate of return per period, and n is the number of periods.  While deterministic models offer the significant advantage of simplicity and provide clear, easily understandable baseline estimates, their primary weakness lies in their inherent inability to account for the unpredictable nature of market behavior and the potential impact of volatility on investment outcomes. They are best suited for initial, simplified projections rather than comprehensive risk assessments.",
         "bullet_points": [
-          "Assumes constant rates of return (no variability)",
-          "Fixed inputs: Monthly investment: $2,000, Annual return rate: 6%, Time horizon: 120 months (10 years)",
-          "Formula: Future Value = P * [(1 + r)^n - 1] / r",
-          "Strengths: Simplicity, Clear baseline estimates",
-          "Weaknesses: Ignores market volatility"
+          "Assumes constant rates of return (no variability): This is the fundamental assumption of deterministic models, which simplifies calculations but sacrifices realism in dynamic market conditions.",
+          "Fixed inputs: Monthly investment: $2,000 (consistent contribution at the end of each month), Annual return rate: 6% (compounded annually), Time horizon: 120 months (10 years, representing the investment duration). These fixed inputs are crucial for the model's operation and define the scenario being projected.",
+          "Formula: `formula` Future Value = P * [((1 + r)^n - 1) / r `formula`. This formula precisely calculates the future value based on the fixed inputs and is the cornerstone of deterministic model calculations.",
+          "Strengths: Simplicity, Clear baseline estimates. These models are easy to understand and implement, providing a readily interpretable starting point for portfolio estimations.",
+          "Weaknesses: Ignores market volatility. The most significant limitation is the disregard for market fluctuations, which can drastically affect actual investment outcomes and limit the model's predictive accuracy in real-world scenarios."
         ]
       },
       {
         "title": "Conclusion",
-        "paragraph": "Combined approach strengths: Deterministic for clear benchmarks, Monte Carlo for risk quantification, Backtesting for real-world validation",
+        "paragraph": "Employing a combined approach to portfolio estimation offers significant advantages. Deterministic models provide clear and easily understandable benchmarks, establishing a foundational understanding. Layering Monte Carlo simulations onto this foundation allows for the crucial quantification of risk and the exploration of potential variability in outcomes. Finally, validating these projections with historical extremes through backtesting ensures a reality check and refines the overall estimation process, bringing real-world validation to theoretical models. This integrated workflow provides a more robust and comprehensive approach to portfolio estimation, addressing both simplified scenarios and complex market dynamics.",
         "bullet_points": [
-          "Recommended workflow:",
-          "Start with deterministic model",
-          "Layer Monte Carlo simulations",
-          "Validate with historical extremes"
+          "Recommended workflow: A phased approach is recommended for optimal portfolio estimation:",
+          "- Start with a deterministic model to establish a clear and simple baseline projection. This provides an initial benchmark and a starting point for further analysis.",
+          "- Layer Monte Carlo simulations to introduce probabilistic elements and quantify potential risks and variability. This adds a crucial dimension of realism by acknowledging market uncertainties.",
+          "- Validate with historical extremes through backtesting to assess model performance against real-world market data and refine estimations based on past performance. This provides a critical reality check and enhances the model's practical applicability."
         ]
       }
     ]
@@ -320,5 +320,3 @@ The integration of AI into healthcare presents transformative opportunities, fro
 
 ---
 """
-
-
