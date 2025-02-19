@@ -134,40 +134,52 @@ def extract_json(text: str) -> Optional[dict]:
 
     """
     logger.info("start extracting JSON from text.")
+    print(text)
 
     # Use regex to extract the JSON part
     json_match = re.search(r'\{.*\}', text, re.DOTALL)
 
     if json_match:
-        json_str = json_match.group(0)  # Extract matched JSON string
-        data_dict = json.loads(json_str)  # Convert JSON string to dictionary
-        logger.info("Successfully extracted JSON from text.")
-        return data_dict
+        try:
+            # Escape backslashes if necessary
+            json_str = json_str.replace("\\", "\\\\")  
+            
+            data_dict = json.loads(json_str)  # Convert JSON string to dictionary
+            logger.info("Successfully extracted JSON from text.")
+            return data_dict
+        
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON Parsing Error: {e}")
+            logger.error(f"Problematic JSON: {json_str[:500]}")  # Show first 500 characters
+            return None
     else:
         logger.error("No JSON found.")
         return None
 
+    
+
 
 def apply_theme_color(shape, rgb):
     """Apply RGB color to shape fill
+
     Args:
         shape: The PowerPoint shape to apply color to
-        rgb: Tuple of RGB values (red, green, blue)
-      """
+        rgb: Tuple of RGB color values (red, green, blue)
+    """
     shape.fill.solid()
     shape.fill.fore_color.rgb = RGBColor(*rgb)
 
 def estimate_text_height(text, font_size, width_inches):
     """Estimate the height needed for text based on font size and width
     Args:
-        text (str): The text content to estimate height for
+        text (str): The text to estimate height for
         font_size (int): Font size in points
         width_inches (float): Available width in inches
-        
+
     Returns:
-        float: Estimated height in inches needed to display the text
+        float: Estimated height in inches needed for the text
     """
-    chars_per_line = int((width_inches * 96) / (font_size * 0.6))  # Improved character width estimation
+    chars_per_line = int((width_inches * 96) / (font_size * 0.6))
     words = text.split()
     lines = 1
     current_line_length = 0
@@ -179,30 +191,29 @@ def estimate_text_height(text, font_size, width_inches):
         else:
             current_line_length += len(word) + 1
             
-    return (lines * font_size * 1.2) / 72  # Convert to inches with reduced line spacing
+    return (lines * font_size * 1.2) / 72
 
 def calculate_content_height(paragraph_text, bullet_points, font_size):
     """Calculate total height needed for content with given font size
+
     Args:
-        paragraph_text (str): The main paragraph text content
-        bullet_points (List[str]): List of bullet point text items
+        paragraph_text (str): Main paragraph text content
+        bullet_points (list): List of bullet point text strings
         font_size (int): Font size in points
-        
+
     Returns:
-        float: Total estimated height in inches needed for all content
+        float: Total height in inches needed for all content
     """
     total_height = 0
     
-    # Height for paragraph
     if paragraph_text:
         total_height += estimate_text_height(paragraph_text, font_size, 12)
-        total_height += 0.3  # Spacing after paragraph
+        total_height += 0.3
     
-    # Height for bullet points
     if bullet_points:
         for point in bullet_points:
             total_height += estimate_text_height(point, font_size, 11)
-            total_height += 0.1  # Spacing between bullet points
+            total_height += 0.1
     
     return total_height
 
@@ -211,7 +222,7 @@ def add_bullet_point(tf, text, theme_colors, font_size):
     
     Args:
         tf: Text frame to add bullet point to
-        text (str): The bullet point text content
+        text (str): Text content for the bullet point
         theme_colors (dict): Dictionary of theme colors
         font_size (int): Font size in points
     """
@@ -228,15 +239,81 @@ def add_bullet_point(tf, text, theme_colors, font_size):
     p.level = 0
     return p
 
+def create_title_slide(prs, presentation_data, THEME_COLORS):
+    """Create title slide with improved text handling
+
+    Args:
+        prs: PowerPoint presentation object
+        presentation_data (dict): Dictionary containing presentation metadata
+        THEME_COLORS (dict): Dictionary of theme colors
+    """
+    title_slide = prs.slides.add_slide(prs.slide_layouts[0])
+    
+    # Background
+    background = title_slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height
+    )
+    apply_theme_color(background, THEME_COLORS['primary'])
+    
+    # Accent bar
+    accent_bar = title_slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(1), Inches(3),
+        Inches(2), Inches(0.1)
+    )
+    apply_theme_color(accent_bar, THEME_COLORS['accent'])
+    
+    # Title with improved text handling
+    title_box = title_slide.shapes.add_textbox(
+        Inches(1), Inches(2),
+        Inches(11), Inches(1.5)  # Increased height for text wrapping
+    )
+    title_frame = title_box.text_frame
+    title_frame.word_wrap = True
+    title_frame.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT  # Enable auto-sizing
+    
+    title_para = title_frame.add_paragraph()
+    title_para.text = presentation_data.get('title', 'Presentation Title')
+    title_para.font.size = Pt(54)
+    title_para.font.bold = True
+    title_para.font.color.rgb = RGBColor(255, 255, 255)
+    
+    # Calculate if we need to reduce font size for long titles
+    while (estimate_text_height(title_para.text, 54, 11) > 1.5 and 
+           title_para.font.size > Pt(32)):
+        current_size = title_para.font.size.pt
+        title_para.font.size = Pt(current_size - 2)
+    
+    # Subtitle with improved text handling
+    subtitle_box = title_slide.shapes.add_textbox(
+        Inches(1), Inches(3.5),
+        Inches(11), Inches(2)  # Increased height for text wrapping
+    )
+    subtitle_frame = subtitle_box.text_frame
+    subtitle_frame.word_wrap = True
+    subtitle_frame.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    
+    subtitle_para = subtitle_frame.add_paragraph()
+    subtitle_para.text = presentation_data.get('subtitle', '')
+    subtitle_para.font.size = Pt(32)
+    subtitle_para.font.color.rgb = THEME_COLORS['secondary']
+    
+    # Calculate if we need to reduce font size for long subtitles
+    while (estimate_text_height(subtitle_para.text, 32, 11) > 2 and 
+           subtitle_para.font.size > Pt(24)):
+        current_size = subtitle_para.font.size.pt
+        subtitle_para.font.size = Pt(current_size - 2)
+
 def create_content_slide(prs, slide_data, idx, THEME_COLORS):
     """Create a single content slide with dynamic font sizing
     
     Args:
-        prs: PowerPoint presentation object
-        slide_data (dict): Dictionary containing slide content including title, paragraph and bullet points
+        prs (Presentation): PowerPoint presentation object
+        slide_data (dict): Data for the slide including title, paragraph and bullet points
         idx (int): Slide index number
-        THEME_COLORS (dict): Dictionary of theme colors for styling
+        THEME_COLORS (dict): Theme color definitions
     """
+   
     slide = prs.slides.add_slide(prs.slide_layouts[1])
     
     # Background
@@ -278,10 +355,9 @@ def create_content_slide(prs, slide_data, idx, THEME_COLORS):
     paragraph_text = slide_data.get('paragraph', '')
     bullet_points = slide_data.get('bullet_points', [])
     
-    # Start with default font size and reduce until content fits
-    font_size = 20  # Start with original size
-    MIN_FONT_SIZE = 14  # Minimum readable font size
-    MAX_CONTENT_HEIGHT = 4.5  # Maximum available height for content in inches
+    font_size = 20
+    MIN_FONT_SIZE = 14
+    MAX_CONTENT_HEIGHT = 4.5
     
     while (font_size > MIN_FONT_SIZE and 
            calculate_content_height(paragraph_text, bullet_points, font_size) > MAX_CONTENT_HEIGHT):
@@ -331,7 +407,14 @@ def create_content_slide(prs, slide_data, idx, THEME_COLORS):
     slide_number_para.alignment = PP_ALIGN.RIGHT
 
 def create_presentation(json_data):
-    # Rest of the create_presentation function remains the same
+    """Create a PowerPoint presentation from JSON data.
+    
+    Args:
+        json_data (dict): JSON data containing presentation content and structure
+    
+    Returns:
+        Presentation: A PowerPoint presentation object
+    """
     prs = Presentation()
     
     THEME_COLORS = {
@@ -346,41 +429,8 @@ def create_presentation(json_data):
     
     presentation_data = json_data.get('presentation', {})
     
-    # Create title slide (same as before)
-    title_slide = prs.slides.add_slide(prs.slide_layouts[0])
-    
-    background = title_slide.shapes.add_shape(
-        MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height
-    )
-    apply_theme_color(background, THEME_COLORS['primary'])
-    
-    accent_bar = title_slide.shapes.add_shape(
-        MSO_SHAPE.RECTANGLE,
-        Inches(1), Inches(3),
-        Inches(2), Inches(0.1)
-    )
-    apply_theme_color(accent_bar, THEME_COLORS['accent'])
-    
-    title_box = title_slide.shapes.add_textbox(
-        Inches(1), Inches(2),
-        Inches(11), Inches(1)
-    )
-    title_frame = title_box.text_frame
-    title_para = title_frame.add_paragraph()
-    title_para.text = presentation_data.get('title', 'Presentation Title')
-    title_para.font.size = Pt(54)
-    title_para.font.bold = True
-    title_para.font.color.rgb = RGBColor(255, 255, 255)
-    
-    subtitle_box = title_slide.shapes.add_textbox(
-        Inches(1), Inches(3.5),
-        Inches(11), Inches(1)
-    )
-    subtitle_frame = subtitle_box.text_frame
-    subtitle_para = subtitle_frame.add_paragraph()
-    subtitle_para.text = presentation_data.get('subtitle', '')
-    subtitle_para.font.size = Pt(32)
-    subtitle_para.font.color.rgb = THEME_COLORS['secondary']
+    # Create title slide with improved handling
+    create_title_slide(prs, presentation_data, THEME_COLORS)
     
     # Create content slides
     for idx, slide_data in enumerate(presentation_data.get('slides', []), 1):
