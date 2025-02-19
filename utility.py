@@ -134,29 +134,18 @@ def extract_json(text: str) -> Optional[dict]:
 
     """
     logger.info("start extracting JSON from text.")
-    print(text)
 
     # Use regex to extract the JSON part
     json_match = re.search(r'\{.*\}', text, re.DOTALL)
 
     if json_match:
-        try:
-            # Escape backslashes if necessary
-            json_str = json_str.replace("\\", "\\\\")  
-            
-            data_dict = json.loads(json_str)  # Convert JSON string to dictionary
-            logger.info("Successfully extracted JSON from text.")
-            return data_dict
-        
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON Parsing Error: {e}")
-            logger.error(f"Problematic JSON: {json_str[:500]}")  # Show first 500 characters
-            return None
+        json_str = json_match.group(0)  # Extract matched JSON string
+        data_dict = json.loads(json_str)  # Convert JSON string to dictionary
+        logger.info("Successfully extracted JSON from text.")
+        return data_dict
     else:
         logger.error("No JSON found.")
         return None
-
-    
 
 
 def apply_theme_color(shape, rgb):
